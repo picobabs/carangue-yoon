@@ -212,6 +212,56 @@
 <body>
 <div class="app">
 
+<div class="overlay" id="auth-gate" style="z-index:300; background:#0f172a;">
+  <div class="modal" style="max-width:400px;">
+    <div id="auth-view-login">
+      <div class="modal-head"><h3 class="modal-title">Connexion — Caarangue Yoon</h3></div>
+      <form id="form-auth-login">
+        <div class="field">
+          <label for="auth-login-email">Adresse email</label>
+          <input type="email" id="auth-login-email" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="auth-login-password">Mot de passe</label>
+          <input type="password" id="auth-login-password" required autocomplete="current-password" />
+        </div>
+        <div class="modal-actions" style="justify-content:space-between; align-items:center;">
+          <button type="button" class="btn" id="btn-goto-signup">Créer un compte</button>
+          <button type="submit" class="btn btn-primary" id="btn-auth-login-submit">Se connecter</button>
+        </div>
+      </form>
+    </div>
+    <div id="auth-view-signup" style="display:none;">
+      <div class="modal-head"><h3 class="modal-title">Créer un compte</h3></div>
+      <form id="form-auth-signup">
+        <div class="field">
+          <label for="auth-signup-nom">Nom complet</label>
+          <input type="text" id="auth-signup-nom" required />
+        </div>
+        <div class="field">
+          <label for="auth-signup-email">Adresse email</label>
+          <input type="email" id="auth-signup-email" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="auth-signup-password">Mot de passe (min. 6 caractères)</label>
+          <input type="password" id="auth-signup-password" minlength="6" required autocomplete="new-password" />
+        </div>
+        <p class="card-sub" style="margin:8px 0 0;">Le compte est créé avec le rôle « Agent de terrain » et le statut « En attente » — un administrateur devra l'activer et, si besoin, changer le rôle dans « Comptes &amp; rôles ».</p>
+        <div class="modal-actions" style="justify-content:space-between; align-items:center;">
+          <button type="button" class="btn" id="btn-goto-login">J'ai déjà un compte</button>
+          <button type="submit" class="btn btn-primary" id="btn-auth-signup-submit">S'inscrire</button>
+        </div>
+      </form>
+    </div>
+    <div id="auth-view-pending" style="display:none; text-align:center;">
+      <div class="modal-head" style="justify-content:center;"><h3 class="modal-title">Compte en attente</h3></div>
+      <p class="card-sub" id="auth-pending-text"></p>
+      <button type="button" class="btn" id="btn-auth-signout">Se déconnecter</button>
+    </div>
+    <p id="auth-message" style="font-size:13px; margin-top:14px; min-height:18px;"></p>
+  </div>
+</div>
+
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo-badge">V</div>
@@ -457,11 +507,11 @@
           <table>
             <thead><tr><th>Référence</th><th>Lieu</th><th>Date</th><th>Gravité</th><th>Statut</th></tr></thead>
             <tbody>
-              <tr><td style="font-weight:500">SIG-2026-0184</td><td>RN1 — PK 42, Thiès</td><td style="color:#94a3b8">2026-08-05</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr><td style="font-weight:500">SIG-2026-0183</td><td>Rond-point Liberté 6, Dakar</td><td style="color:#94a3b8">2026-08-05</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
-              <tr><td style="font-weight:500">SIG-2026-0182</td><td>Route de Rufisque, PK 12</td><td style="color:#94a3b8">2026-08-04</td><td>Blessés graves</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr><td style="font-weight:500">SIG-2026-0181</td><td>Autoroute A1, Diamniadio</td><td style="color:#94a3b8">2026-08-04</td><td>Mortel</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
-              <tr><td style="font-weight:500">SIG-2026-0180</td><td>Avenue Cheikh Anta Diop</td><td style="color:#94a3b8">2026-08-03</td><td>Dégâts matériels</td><td><span class="badge badge-rejete">Rejeté</span></td></tr>
+              <tr><td style="font-weight:500">SIG-2026-0184</td><td>RN1 — PK 42, Thiès (14.79100, -16.93590)</td><td style="color:#94a3b8">2026-08-05</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr><td style="font-weight:500">SIG-2026-0183</td><td>Rond-point Liberté 6, Dakar (14.71670, -17.46770)</td><td style="color:#94a3b8">2026-08-05</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
+              <tr><td style="font-weight:500">SIG-2026-0182</td><td>Route de Rufisque, PK 12 (14.71670, -17.28330)</td><td style="color:#94a3b8">2026-08-04</td><td>Blessés graves</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr><td style="font-weight:500">SIG-2026-0181</td><td>Autoroute A1, Diamniadio (14.71670, -17.18330)</td><td style="color:#94a3b8">2026-08-04</td><td>Mortel</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
+              <tr><td style="font-weight:500">SIG-2026-0180</td><td>Avenue Cheikh Anta Diop (14.69280, -17.44670)</td><td style="color:#94a3b8">2026-08-03</td><td>Dégâts matériels</td><td><span class="badge badge-rejete">Rejeté</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -574,16 +624,16 @@
           <table id="table-signalements">
             <thead><tr><th>Référence</th><th>Lieu</th><th>Date</th><th>Type de route</th><th>Gravité</th><th>Statut</th></tr></thead>
             <tbody>
-              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0184</td><td>RN1 — PK 42, Thiès</td><td style="color:#94a3b8">2026-08-05</td><td>Route nationale</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr data-statut="En attente" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0183</td><td>Rond-point Liberté 6, Dakar</td><td style="color:#94a3b8">2026-08-05</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
-              <tr data-statut="Validé" data-gravite="Blessés graves"><td style="font-weight:500">SIG-2026-0182</td><td>Route de Rufisque, PK 12</td><td style="color:#94a3b8">2026-08-04</td><td>Route nationale</td><td>Blessés graves</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr data-statut="En analyse" data-gravite="Mortel"><td style="font-weight:500">SIG-2026-0181</td><td>Autoroute A1, Diamniadio</td><td style="color:#94a3b8">2026-08-04</td><td>Autoroute</td><td>Mortel</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
-              <tr data-statut="Rejeté" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0180</td><td>Avenue Cheikh Anta Diop</td><td style="color:#94a3b8">2026-08-03</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-rejete">Rejeté</span></td></tr>
-              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0179</td><td>RN2 — PK 88, Saint-Louis</td><td style="color:#94a3b8">2026-08-02</td><td>Route nationale</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr data-statut="Validé" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0178</td><td>Boulevard du Centenaire, Dakar</td><td style="color:#94a3b8">2026-08-02</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr data-statut="En analyse" data-gravite="Blessés graves"><td style="font-weight:500">SIG-2026-0177</td><td>RN6 — PK 15, Kolda</td><td style="color:#94a3b8">2026-08-01</td><td>Route nationale</td><td>Blessés graves</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
-              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0176</td><td>Autoroute A1, Mbour</td><td style="color:#94a3b8">2026-07-31</td><td>Autoroute</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
-              <tr data-statut="En attente" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0175</td><td>Route de Mbao, Pikine</td><td style="color:#94a3b8">2026-07-31</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
+              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0184</td><td>RN1 — PK 42, Thiès (14.79100, -16.93590)</td><td style="color:#94a3b8">2026-08-05</td><td>Route nationale</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr data-statut="En attente" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0183</td><td>Rond-point Liberté 6, Dakar (14.71670, -17.46770)</td><td style="color:#94a3b8">2026-08-05</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
+              <tr data-statut="Validé" data-gravite="Blessés graves"><td style="font-weight:500">SIG-2026-0182</td><td>Route de Rufisque, PK 12 (14.71670, -17.28330)</td><td style="color:#94a3b8">2026-08-04</td><td>Route nationale</td><td>Blessés graves</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr data-statut="En analyse" data-gravite="Mortel"><td style="font-weight:500">SIG-2026-0181</td><td>Autoroute A1, Diamniadio (14.71670, -17.18330)</td><td style="color:#94a3b8">2026-08-04</td><td>Autoroute</td><td>Mortel</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
+              <tr data-statut="Rejeté" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0180</td><td>Avenue Cheikh Anta Diop (14.69280, -17.44670)</td><td style="color:#94a3b8">2026-08-03</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-rejete">Rejeté</span></td></tr>
+              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0179</td><td>RN2 — PK 88, Saint-Louis (16.01790, -16.48960)</td><td style="color:#94a3b8">2026-08-02</td><td>Route nationale</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr data-statut="Validé" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0178</td><td>Boulevard du Centenaire, Dakar (14.69370, -17.44410)</td><td style="color:#94a3b8">2026-08-02</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr data-statut="En analyse" data-gravite="Blessés graves"><td style="font-weight:500">SIG-2026-0177</td><td>RN6 — PK 15, Kolda (12.89390, -14.94120)</td><td style="color:#94a3b8">2026-08-01</td><td>Route nationale</td><td>Blessés graves</td><td><span class="badge badge-analyse">En analyse</span></td></tr>
+              <tr data-statut="Validé" data-gravite="Blessés légers"><td style="font-weight:500">SIG-2026-0176</td><td>Autoroute A1, Mbour (14.41980, -16.96360)</td><td style="color:#94a3b8">2026-07-31</td><td>Autoroute</td><td>Blessés légers</td><td><span class="badge badge-valide">Validé</span></td></tr>
+              <tr data-statut="En attente" data-gravite="Dégâts matériels"><td style="font-weight:500">SIG-2026-0175</td><td>Route de Mbao, Pikine (14.75000, -17.36670)</td><td style="color:#94a3b8">2026-07-31</td><td>Voirie urbaine</td><td>Dégâts matériels</td><td><span class="badge badge-attente">En attente</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1283,6 +1333,7 @@
             <div>
               <p class="card-title" style="margin:0;">Comptes &amp; rôles</p>
               <p class="card-sub" style="margin:4px 0 0;">Gestion des comptes d'administration de la plateforme</p>
+              <p class="card-sub" id="table-comptes-note" style="margin:4px 0 0;"></p>
             </div>
             <button class="btn btn-primary" id="btn-nouveau-compte">+ Nouveau compte</button>
           </div>
@@ -1424,7 +1475,7 @@
           <p class="card-sub" style="margin:10px 0 0;">Ce réglage s'applique aux nouveaux signalements créés pendant la session en cours.</p>
         </div>
 
-        <div class="card" style="margin-top:20px;">
+        <div class="card" style="margin-top:20px;" id="param-role-demo-card">
           <p class="card-title">Rôle de démonstration</p>
           <p class="card-sub" style="margin-bottom:12px;">Ce fichier autonome ne comporte pas d'authentification réelle. Utilisez ce réglage pour tester les restrictions liées au rôle (ex : validation des signalements réservée aux rôles Superviseur et Administrateur).</p>
           <div class="form-grid">
@@ -1445,6 +1496,13 @@
             </div>
           </div>
           <p class="card-sub" style="margin:10px 0 0;">Quand le rôle est « Agent de terrain » et qu'une région est assignée, la liste des signalements est restreinte aux signalements de cette région (signalements créés avec le formulaire complet uniquement — les entrées de démonstration ne portent pas de région et restent visibles).</p>
+        </div>
+
+        <div class="card" style="margin-top:20px; display:none;" id="param-role-real-card">
+          <p class="card-title">Mon compte</p>
+          <p class="card-sub" id="param-real-user-info" style="margin-bottom:12px;"></p>
+          <p class="card-sub">Le rôle et le statut de ce compte sont gérés dans « Comptes &amp; rôles » (Administration) par un administrateur — ils ne se changent plus soi-même ici.</p>
+          <button type="button" class="btn" id="btn-auth-signout-settings" style="margin-top:8px;">Se déconnecter</button>
         </div>
 
         <div class="card" style="margin-top:20px;">
@@ -1705,7 +1763,25 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+  /* ---------- Authentification réelle des comptes (Supabase) ----------
+     Remplace les deux valeurs ci-dessous par celles de ton projet Supabase
+     (Project Settings → API → Project URL / anon public key). La clé
+     "anon" est une clé PUBLIQUE conçue pour vivre dans le code client —
+     ce n'est pas un secret. Ne mets JAMAIS la "service_role key" ici.
+     Tant que ces valeurs ne sont pas renseignées, l'application reste en
+     mode démonstration (comportement inchangé, rôle choisi manuellement
+     dans Paramètres). Voir README.md pour la procédure complète. */
+  var SUPABASE_URL = 'https://oxxwudquxgnzgbhbtdfi.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_KBV0f3E2XiZnmI9GA4JX9Q_qfofR4Yp';
+  var supabaseClient = (typeof supabase !== 'undefined' &&
+      SUPABASE_URL.indexOf('REPLACE_ME') === -1 &&
+      SUPABASE_ANON_KEY.indexOf('REPLACE_ME') === -1)
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+  var currentUserProfile = null;
+
   var nav = document.getElementById('nav');
   var pages = document.querySelectorAll('.page');
   var leafletMap = null;
@@ -1730,6 +1806,9 @@
     }
     if (target === 'zones' && typeof renderRoutesDB === 'function') {
       renderRoutesDB();
+    }
+    if (target === 'securite' && typeof renderComptesReal === 'function') {
+      renderComptesReal();
     }
   }
 
@@ -2147,6 +2226,212 @@
       if (typeof applyFilters === 'function') applyFilters();
     });
   }
+
+  /* ---------- Authentification réelle des comptes (Supabase) ---------- */
+  function authGateShow(view, message, isError){
+    var gate = document.getElementById('auth-gate');
+    if (!gate) return;
+    gate.style.display = 'flex';
+    ['login', 'signup', 'pending'].forEach(function(v){
+      var el = document.getElementById('auth-view-' + v);
+      if (el) el.style.display = (v === view) ? '' : 'none';
+    });
+    var msgEl = document.getElementById('auth-message');
+    if (msgEl) {
+      msgEl.textContent = message || '';
+      msgEl.style.color = isError ? '#dc2626' : '#16a34a';
+    }
+  }
+
+  function authGateHide(){
+    var gate = document.getElementById('auth-gate');
+    if (gate) gate.style.display = 'none';
+  }
+
+  function applyUserProfileToApp(profile){
+    currentUserProfile = profile;
+    currentUserRole = profile.role;
+    var regionWrap = document.getElementById('param-region-agent-wrap');
+    if (regionWrap) regionWrap.style.display = (currentUserRole === 'Agent de terrain') ? '' : 'none';
+    var demoCard = document.getElementById('param-role-demo-card');
+    var realCard = document.getElementById('param-role-real-card');
+    if (demoCard) demoCard.style.display = 'none';
+    if (realCard) {
+      realCard.style.display = '';
+      var infoEl = document.getElementById('param-real-user-info');
+      if (infoEl) infoEl.textContent = (profile.nom || profile.email) + ' — ' + profile.role + ' (' + profile.statut + ')';
+    }
+    if (typeof applyFilters === 'function') applyFilters();
+  }
+
+  async function loadOwnProfileAndEnter(user){
+    var res = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+    if (res.error || !res.data) {
+      authGateShow('login', 'Compte connecté mais profil introuvable (' + (res.error ? res.error.message : 'inconnu') + '). Réessaie ou contacte un administrateur.', true);
+      return;
+    }
+    var profile = res.data;
+    if (profile.statut !== 'Actif') {
+      var pendingText = document.getElementById('auth-pending-text');
+      if (pendingText) pendingText.textContent = 'Compte ' + profile.email + ' créé (rôle par défaut : ' + profile.role + ') — en attente de validation par un administrateur. Reviens une fois ton compte activé dans « Comptes & rôles ».';
+      authGateShow('pending', '', false);
+      return;
+    }
+    authGateHide();
+    applyUserProfileToApp(profile);
+  }
+
+  async function initSupabaseAuth(){
+    if (!supabaseClient) return; // Supabase non configuré : mode démonstration inchangé.
+    try {
+      var sessionRes = await supabaseClient.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (session && session.user) {
+        await loadOwnProfileAndEnter(session.user);
+      } else {
+        authGateShow('login', '', false);
+      }
+    } catch (err) {
+      authGateShow('login', 'Connexion au service de comptes impossible pour le moment (' + err.message + ').', true);
+    }
+    supabaseClient.auth.onAuthStateChange(function(event){
+      if (event === 'SIGNED_OUT') {
+        currentUserProfile = null;
+        var demoCard = document.getElementById('param-role-demo-card');
+        var realCard = document.getElementById('param-role-real-card');
+        if (realCard) realCard.style.display = 'none';
+        if (demoCard) demoCard.style.display = supabaseClient ? 'none' : '';
+        authGateShow('login', '', false);
+      }
+    });
+  }
+
+  var formAuthLogin = document.getElementById('form-auth-login');
+  if (formAuthLogin) formAuthLogin.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var email = document.getElementById('auth-login-email').value.trim();
+    var password = document.getElementById('auth-login-password').value;
+    authGateShow('login', 'Connexion en cours…', false);
+    try {
+      var res = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) {
+        authGateShow('login', res.error.message, true);
+        return;
+      }
+      await loadOwnProfileAndEnter(res.data.user);
+    } catch (err) {
+      authGateShow('login', err.message, true);
+    }
+  });
+
+  var formAuthSignup = document.getElementById('form-auth-signup');
+  if (formAuthSignup) formAuthSignup.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var nom = document.getElementById('auth-signup-nom').value.trim();
+    var email = document.getElementById('auth-signup-email').value.trim();
+    var password = document.getElementById('auth-signup-password').value;
+    authGateShow('signup', 'Création du compte en cours…', false);
+    try {
+      var res = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { nom: nom } }
+      });
+      if (res.error) {
+        authGateShow('signup', res.error.message, true);
+        return;
+      }
+      if (res.data.session && res.data.user) {
+        await loadOwnProfileAndEnter(res.data.user);
+      } else {
+        // Confirmation par email requise côté projet Supabase.
+        authGateShow('login', 'Compte créé pour ' + email + ' — vérifie ta boîte mail si une confirmation est requise, puis connecte-toi.', false);
+      }
+    } catch (err) {
+      authGateShow('signup', err.message, true);
+    }
+  });
+
+  var btnGotoSignup = document.getElementById('btn-goto-signup');
+  if (btnGotoSignup) btnGotoSignup.addEventListener('click', function(){ authGateShow('signup', '', false); });
+  var btnGotoLogin = document.getElementById('btn-goto-login');
+  if (btnGotoLogin) btnGotoLogin.addEventListener('click', function(){ authGateShow('login', '', false); });
+
+  function doSupabaseSignOut(){
+    if (!supabaseClient) return;
+    supabaseClient.auth.signOut().then(function(){
+      authGateShow('login', '', false);
+    });
+  }
+  var btnAuthSignout = document.getElementById('btn-auth-signout');
+  if (btnAuthSignout) btnAuthSignout.addEventListener('click', doSupabaseSignOut);
+  var btnAuthSignoutSettings = document.getElementById('btn-auth-signout-settings');
+  if (btnAuthSignoutSettings) btnAuthSignoutSettings.addEventListener('click', doSupabaseSignOut);
+
+  async function renderComptesReal(){
+    if (!supabaseClient) return;
+    var tbody = document.querySelector('#table-comptes tbody');
+    if (!tbody) return;
+    var res = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: true });
+    if (res.error) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:#dc2626;">Erreur de chargement des comptes : ' + escapeHtml(res.error.message) + '</td></tr>';
+      return;
+    }
+    var rows = res.data || [];
+    var isAdmin = !!(currentUserProfile && currentUserProfile.role === 'Administrateur' && currentUserProfile.statut === 'Actif');
+    var roles = ['Administrateur', 'Superviseur', 'Analyste BAAC', 'Agent de terrain'];
+    var statuts = ['Actif', 'Inactif', 'En attente'];
+    tbody.innerHTML = rows.length ? rows.map(function(p){
+      var roleCell, statutCell;
+      if (isAdmin) {
+        roleCell = '<select class="compte-role-select" data-id="' + p.id + '">' +
+          roles.map(function(r){ return '<option' + (r === p.role ? ' selected' : '') + '>' + r + '</option>'; }).join('') +
+          '</select>';
+        statutCell = '<select class="compte-statut-select" data-id="' + p.id + '">' +
+          statuts.map(function(s){ return '<option' + (s === p.statut ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+          '</select>';
+      } else {
+        roleCell = escapeHtml(p.role);
+        var statutClass = p.statut === 'Actif' ? 'badge-actif' : (p.statut === 'En attente' ? 'badge-attente' : 'badge-inactif');
+        statutCell = '<span class="badge ' + statutClass + '">' + escapeHtml(p.statut) + '</span>';
+      }
+      return '<tr data-id="' + p.id + '">' +
+        '<td style="font-weight:500">' + escapeHtml(p.nom || '(sans nom)') + '</td>' +
+        '<td>' + escapeHtml(p.email || '') + '</td>' +
+        '<td>' + roleCell + '</td>' +
+        '<td>' + statutCell + '</td>' +
+        '</tr>';
+    }).join('') : '<tr><td colspan="4" style="color:#94a3b8;">Aucun compte pour le moment.</td></tr>';
+    if (!isAdmin) {
+      var noteEl = document.getElementById('table-comptes-note');
+      if (noteEl) noteEl.textContent = 'Seuls les administrateurs actifs peuvent modifier le rôle ou le statut d\'un compte.';
+    }
+  }
+
+  document.addEventListener('change', function(e){
+    if (!supabaseClient) return;
+    var isRoleSelect = e.target.classList && e.target.classList.contains('compte-role-select');
+    var isStatutSelect = e.target.classList && e.target.classList.contains('compte-statut-select');
+    if (!isRoleSelect && !isStatutSelect) return;
+    var id = e.target.getAttribute('data-id');
+    var field = isRoleSelect ? 'role' : 'statut';
+    var patch = {};
+    patch[field] = e.target.value;
+    supabaseClient.from('profiles').update(patch).eq('id', id).then(function(res){
+      if (res.error) {
+        alert('Modification refusée : ' + res.error.message + ' (seuls les administrateurs actifs peuvent modifier un compte)');
+        renderComptesReal();
+      } else {
+        addAuditLog('👤', (currentUserProfile ? (currentUserProfile.nom || currentUserProfile.email) : 'Administrateur'), 'a modifié le ' + field + ' du compte', id);
+      }
+    });
+  });
+
+  if (supabaseClient) {
+    var demoCardInit = document.getElementById('param-role-demo-card');
+    if (demoCardInit) demoCardInit.style.display = 'none';
+  }
+  initSupabaseAuth();
 
   function updateAttenteBadges(){
     var seuilInput = document.getElementById('param-seuil-attente');
@@ -4278,6 +4563,7 @@
     var croquis = (nsCroquisHasContent && nsCroquisCanvas) ? nsCroquisCanvas.toDataURL('image/png') : '';
 
     var lieu = adresse || [numeroRoute, commune].filter(Boolean).join(' — ') || commune || 'Lieu non précisé';
+    var lieuAffiche = lieu + (lat && lng ? ' (' + lat + ', ' + lng + ')' : '');
 
     var tr = document.createElement('tr');
     tr.className = 'signalement-row';
@@ -4287,7 +4573,7 @@
     tr.setAttribute('data-region', region || '');
     tr.innerHTML =
       '<td style="font-weight:500">' + ref + '</td>' +
-      '<td>' + escapeHtml(lieu) + '</td>' +
+      '<td>' + escapeHtml(lieuAffiche) + '</td>' +
       '<td style="color:#94a3b8">' + dateAccident + '</td>' +
       '<td>' + typeRoute + '</td>' +
       '<td>' + gravite + '</td>' +
@@ -4365,6 +4651,10 @@
   /* ---------- Comptes & rôles ---------- */
   var btnNouveauCompte = document.getElementById('btn-nouveau-compte');
   if (btnNouveauCompte) btnNouveauCompte.addEventListener('click', function(){
+    if (supabaseClient) {
+      alert('Les comptes sont désormais réels : demande à la personne concernée de créer elle-même son compte via l\'écran de connexion (bouton « Créer un compte »). Son compte apparaîtra ci-dessous avec le statut « En attente » — attribue-lui alors le rôle voulu et passe son statut à « Actif ».');
+      return;
+    }
     compte2FA.pending = false;
     compte2FA.code = null;
     var w = document.getElementById('c-2fa-wrap'), c = document.getElementById('c-2fa-code'), b = document.getElementById('btn-compte-submit');
@@ -4498,7 +4788,16 @@
       var gravite = morts > 0 ? 'Mortel' : (typeC === 'C' ? 'Blessés graves' : 'Dégâts matériels');
       var statut = 'Validé';
       var statutClass = 'badge-valide';
+
+      var coordKey = (typeof gendCommuneCoordKey !== 'undefined') ? gendCommuneCoordKey[commune] : null;
+      var lat = '', lng = '';
+      if (coordKey && coords[coordKey]) {
+        var j = jitterFromRef(ref);
+        lat = (coords[coordKey][0] + j[0]).toFixed(5);
+        lng = (coords[coordKey][1] + j[1]).toFixed(5);
+      }
       var lieu = 'Autoroute à péage — ' + commune;
+      var lieuAffiche = lieu + (lat && lng ? ' (' + lat + ', ' + lng + ')' : '');
 
       var tr = document.createElement('tr');
       tr.className = 'signalement-row';
@@ -4509,20 +4808,12 @@
       tr.setAttribute('data-source-archive', 'gendarmerie');
       tr.innerHTML =
         '<td style="font-weight:500">' + ref + '</td>' +
-        '<td>' + escapeHtml(lieu) + '</td>' +
+        '<td>' + escapeHtml(lieuAffiche) + '</td>' +
         '<td style="color:#94a3b8">' + date + '</td>' +
         '<td>Autoroute</td>' +
         '<td>' + gravite + '</td>' +
         '<td><span class="badge ' + statutClass + '">' + statut + '</span></td>';
       frag.appendChild(tr);
-
-      var coordKey = (typeof gendCommuneCoordKey !== 'undefined') ? gendCommuneCoordKey[commune] : null;
-      var lat = '', lng = '';
-      if (coordKey && coords[coordKey]) {
-        var j = jitterFromRef(ref);
-        lat = (coords[coordKey][0] + j[0]).toFixed(5);
-        lng = (coords[coordKey][1] + j[1]).toFixed(5);
-      }
 
       signalementExtra[ref] = {
         pv: '', datePv: '', dateAccident: date, heureAccident: heure,

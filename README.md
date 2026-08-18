@@ -91,6 +91,75 @@ pour le générer) : si une chaîne ne remonte jamais rien après quelques
 jours, vérifie son `channel_id` (voir commentaire dans le script) et
 corrige-le au besoin.
 
+## Comptes & rôles réels (Supabase, gratuit)
+
+Par défaut, la page « Paramètres → Rôle de démonstration » et le bouton
+« + Nouveau compte » sont des **simulations** (rien n'est sauvegardé, pas
+de vrai mot de passe, pas de vraie sécurité) — c'est explicitement indiqué
+sur la page. Le fichier contient déjà tout le code pour activer un
+véritable système de comptes, gratuit, via [Supabase](https://supabase.com)
+(un service qui fournit une base de données + une authentification sécurisée
+gratuitement pour ce genre de projet). Il ne manque que la configuration,
+que je ne peux pas faire à ta place (création de compte tiers) :
+
+1. **Crée un compte Supabase** sur [supabase.com](https://supabase.com)
+   (gratuit, avec ton email ou GitHub) et crée un nouveau projet (choisis
+   une région proche, par ex. Europe). Note le mot de passe de base de
+   données que Supabase te propose de générer — garde-le de côté.
+2. Une fois le projet créé, va dans **SQL Editor** (menu de gauche), clique
+   **New query**, colle **tout le contenu** du fichier `supabase-setup.sql`
+   fourni dans ce dossier, puis clique **Run**. Cela crée la table des
+   comptes et les règles de sécurité nécessaires.
+3. Va dans **Project Settings → API**. Tu y trouveras deux valeurs à me
+   transmettre (ou à coller toi-même dans `index.html`) :
+   - **Project URL** (ex. `https://xxxxx.supabase.co`)
+   - **anon public key** (une longue chaîne commençant par `eyJ...`) — c'est
+     une clé **publique**, prévue pour être dans le code du site, ce n'est
+     pas un mot de passe.
+
+   ⚠️ Ne partage **jamais** la « `service_role` key » (une autre clé visible
+   sur la même page) — celle-ci donne un accès total à la base de données et
+   ne doit jamais apparaître dans un site.
+4. Dans `index.html`, cherche (tout en haut du `<script>` principal, juste
+   après les balises `<script src=...leaflet...>` etc.) :
+   ```js
+   var SUPABASE_URL = 'REPLACE_ME_SUPABASE_URL';
+   var SUPABASE_ANON_KEY = 'REPLACE_ME_SUPABASE_ANON_KEY';
+   ```
+   et remplace les deux valeurs par celles obtenues à l'étape 3, puis publie
+   le fichier mis à jour sur GitHub Pages comme d'habitude.
+5. Ouvre le site : un écran de connexion apparaît désormais. Clique
+   **Créer un compte**, inscris-toi avec ton propre email. Ton compte est
+   créé avec le rôle « Agent de terrain » et le statut « En attente ».
+6. Retourne dans Supabase, **SQL Editor**, et exécute (en remplaçant
+   l'email par le tien) :
+   ```sql
+   update public.profiles set role = 'Administrateur', statut = 'Actif'
+   where email = 'ton-email@exemple.com';
+   ```
+   C'est la seule fois où un rôle se change « à la main » dans la base —
+   ensuite, tout se fait depuis la page **Comptes & rôles** du site.
+7. Recharge le site et connecte-toi : tu es maintenant Administrateur.
+   Depuis **Administration → Comptes & rôles**, tu vois la liste réelle des
+   comptes (plus les 5 lignes de démonstration) et tu peux changer le rôle
+   ou le statut de chacun avec les menus déroulants — les changements sont
+   immédiatement sauvegardés dans Supabase.
+8. Pour ajouter quelqu'un d'autre : demande-lui de créer lui-même son compte
+   via **Créer un compte** sur l'écran de connexion. Son compte apparaît
+   dans **Comptes & rôles** avec le statut « En attente » ; attribue-lui le
+   rôle voulu et passe son statut à « Actif ».
+
+Tant que `SUPABASE_URL`/`SUPABASE_ANON_KEY` ne sont pas renseignées, le site
+continue de fonctionner exactement comme avant (mode démonstration, rôle
+choisi manuellement) — aucune régression si tu ne fais pas cette étape tout
+de suite.
+
+**Limite à connaître** : la couche gratuite de Supabase suffit largement
+pour ce type d'usage (jusqu'à 50 000 utilisateurs actifs mensuels, base de
+données incluse), sans carte bancaire à renseigner à l'inscription — mais
+comme pour tout service tiers, vérifie les conditions/tarifs actuels sur
+supabase.com si le nombre de comptes ou d'utilisation grossit beaucoup.
+
 ## Bon à savoir
 
 - C'est un hébergement **gratuit et illimité en durée**, sans carte
@@ -98,11 +167,12 @@ corrige-le au besoin.
 - Le dépôt doit rester **public** pour que Pages soit gratuit sur un compte
   GitHub personnel standard (les dépôts privés + Pages gratuits ne sont
   disponibles que sur les comptes GitHub Pro/organisation).
-- Cette plateforme est un fichier HTML autonome, sans base de données
-  partagée : chaque visiteur a sa propre session en mémoire (les
-  signalements créés ne sont pas partagés entre utilisateurs, ni
-  sauvegardés d'une visite à l'autre). Si tu veux qu'un signalement créé
-  par un agent soit visible par les autres, il faudra ajouter un vrai
-  backend (base de données + API), ce qui dépasse le simple hébergement
-  statique — dis-le moi si c'est ce qu'il te faut, on peut regarder les
-  options gratuites adaptées (Supabase, Firebase, etc.).
+- Cette plateforme reste un fichier HTML autonome pour les **signalements** :
+  sans configuration Supabase supplémentaire (voir plus haut, qui ne couvre
+  que les comptes/rôles), chaque visiteur a sa propre session en mémoire —
+  les signalements créés ne sont pas partagés entre utilisateurs, ni
+  sauvegardés d'une visite à l'autre. Si tu veux qu'un signalement créé par
+  un agent soit visible par les autres aussi, il faudrait étendre la même
+  base Supabase à une table "signalements" — dis-le moi si c'est ce qu'il te
+  faut, c'est une suite logique naturelle à ce qui vient d'être mis en place
+  pour les comptes.
