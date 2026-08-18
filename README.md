@@ -2,8 +2,15 @@
 
 Ce dossier contient tout ce qu'il faut : `index.html` (la plateforme, renommée
 depuis `caarangue-yoon.html` — GitHub Pages sert automatiquement le fichier
-`index.html` d'un dépôt) et `.nojekyll` (désactive un traitement automatique
-de GitHub qui n'est pas nécessaire ici et peut parfois casser des fichiers).
+`index.html` d'un dépôt), `.nojekyll` (désactive un traitement automatique
+de GitHub qui n'est pas nécessaire ici et peut parfois casser des fichiers),
+et le nécessaire pour les **alertes presse automatiques** (voir plus bas) :
+`.github/workflows/news-alerts.yml`, `scripts/fetch_news_alerts.py`,
+`requirements.txt` et `news-alerts.json`.
+
+**Important** : glisse-dépose bien **tout le contenu de ce dossier** (pas
+seulement `index.html`) lors de l'upload — sinon les alertes presse ne
+fonctionneront pas.
 
 ## Option A — sans ligne de commande (le plus simple)
 
@@ -50,6 +57,39 @@ du dépôt).
   changes**. Le site se met à jour automatiquement en 1-2 minutes.
 - **Option B** : remplace le fichier `index.html` localement, puis
   `git add index.html && git commit -m "Mise à jour" && git push`.
+
+## Alertes presse automatiques
+
+Le module "🚨 Alertes accidents" du tableau de bord affiche aussi, en plus
+des signalements graves/mortels créés dans l'application, des articles de
+presse et vidéos YouTube d'actualité sénégalaise mentionnant un accident de
+la circulation.
+
+Fonctionnement : le workflow GitHub Actions `.github/workflows/news-alerts.yml`
+s'exécute automatiquement toutes les 2 heures (et peut être lancé
+manuellement depuis l'onglet **Actions** du dépôt, bouton **Run workflow**).
+Il exécute `scripts/fetch_news_alerts.py`, qui va chercher les derniers
+articles/vidéos sur quelques flux RSS de presse sénégalaise (SeneNews,
+Sénégal7, PresseAfrik, AllAfrica) et flux YouTube (RTS, TFM), garde ceux qui
+contiennent un mot-clé lié aux accidents de la route, et écrit le résultat
+dans `news-alerts.json`. Le site lit ensuite ce fichier au chargement.
+
+C'est entièrement gratuit (minutes GitHub Actions incluses avec un dépôt
+public) et ne nécessite aucune clé API.
+
+Pour ajuster les sources ou les mots-clés : modifie les listes `FEEDS`,
+`YOUTUBE_CHANNELS` et `KEYWORDS` en haut de `scripts/fetch_news_alerts.py`,
+commit, et la prochaine exécution du workflow prendra en compte le
+changement.
+
+Limite à connaître : c'est un filtre par mots-clés simple, pas une analyse
+de sens — il peut occasionnellement laisser passer un faux positif ou
+manquer un article formulé différemment. Les identifiants des chaînes
+YouTube suivies n'ont pas pu être vérifiés en conditions réelles au moment
+de la création de ce fichier (accès réseau restreint côté outil utilisé
+pour le générer) : si une chaîne ne remonte jamais rien après quelques
+jours, vérifie son `channel_id` (voir commentaire dans le script) et
+corrige-le au besoin.
 
 ## Bon à savoir
 

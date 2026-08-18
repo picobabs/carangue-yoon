@@ -137,6 +137,10 @@
   .alert-dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
   .alert-empty { padding:16px; text-align:center; color:#94a3b8; font-size:13px; }
   .alert-module-item { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .alert-dismiss-btn { flex-shrink:0; border:1px solid #e2e8f0; background:#fff; color:#64748b; border-radius:7px; width:26px; height:26px; font-size:13px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .alert-dismiss-btn:hover { background:#fff1f2; border-color:#fecdd3; color:#be123c; }
+  .alert-clear-all-btn { border:1px solid #e2e8f0; background:#fff; color:#334155; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:500; cursor:pointer; }
+  .alert-clear-all-btn:hover { background:#f8fafc; }
 
   .search-results { position:absolute; top:100%; left:0; right:0; margin-top:6px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 12px 28px rgba(0,0,0,.1); max-height:340px; overflow-y:auto; z-index:70; display:none; }
   .search-results.open { display:block; }
@@ -337,8 +341,9 @@
           <div class="page-head" style="margin-bottom:12px;">
             <div>
               <p class="card-title" style="margin:0;">🚨 Alertes accidents</p>
-              <p class="card-sub" style="margin:4px 0 0;">Signalements graves ou mortels récents nécessitant une attention prioritaire</p>
+              <p class="card-sub" style="margin:4px 0 0;">Accidents graves/mortels, impliquant un transport en commun, ou relayés par la presse sénégalaise</p>
             </div>
+            <button type="button" class="alert-clear-all-btn" id="btn-clear-all-alerts">✓ Tout marquer comme traité</button>
           </div>
           <div id="alert-list"></div>
         </div>
@@ -2680,28 +2685,76 @@
     });
   }
 
-  /* ---------- Module Alertes accidents ---------- */
-  var alertsData = [
+  /* ---------- Module Alertes accidents (gestion réelle : critères élargis,
+     persistance locale via localStorage, et possibilité de traiter/fermer
+     chaque alerte) ---------- */
+  var ALERTS_STORAGE_KEY = 'caarangueYoonAlertsV1';
+
+  // Alertes de démonstration, affichées uniquement tant qu'aucun historique
+  // réel n'existe encore dans ce navigateur. Dès qu'une vraie alerte est
+  // créée (ou qu'une alerte est traitée), c'est l'historique persisté qui
+  // prend le relais, y compris après un rechargement de la page.
+  var ALERT_SEED = [
     { ref:'SIG-2026-0181', message:'Accident mortel signalé', lieu:'Autoroute A1, Diamniadio', time:'2026-08-04 14:20', severity:'Mortel', source:'Agent de terrain' },
     { ref:'SIG-2026-0182', message:'Accident avec blessés graves', lieu:'Route de Rufisque, PK 12', time:'2026-08-04 09:05', severity:'Blessés graves', source:'Appel citoyen' },
     { ref:'SIG-2026-0177', message:'Accident avec blessés graves', lieu:'RN6 — PK 15, Kolda', time:'2026-08-01 17:40', severity:'Blessés graves', source:'Sapeurs-pompiers' }
   ];
 
+  function nextAlertId(){
+    return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function loadStoredAlerts(){
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem(ALERTS_STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveStoredAlerts(){
+    try {
+      if (window.localStorage) window.localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(alertsData));
+    } catch (e) {
+      // Stockage indisponible (navigation privée, quota dépassé...) : les
+      // alertes restent fonctionnelles pour la session en cours, simplement
+      // non conservées d'une visite à l'autre.
+    }
+  }
+
+  var storedAlerts = loadStoredAlerts();
+  var alertsData = (storedAlerts || ALERT_SEED).map(function(a){
+    if (!a.id) a.id = nextAlertId();
+    return a;
+  });
+  if (!storedAlerts) saveStoredAlerts();
+
   function alertItemHtml(a, compact){
-    var color = a.severity === 'Mortel' ? '#c23b3b' : '#e2734a';
-    var badgeClassAlert = a.severity === 'Mortel' ? 'badge-rejete' : 'badge-analyse';
+    var isPresse = a.type === 'presse';
+    var color = isPresse ? '#475569' : (a.severity === 'Mortel' ? '#c23b3b' : '#e2734a');
+    var badgeClassAlert = isPresse ? 'badge-inactif' : (a.severity === 'Mortel' ? 'badge-rejete' : 'badge-analyse');
+    var badgeLabel = isPresse ? 'Presse' : a.severity;
     var sourceLabel = a.source || 'Non précisée';
+    var refPrefix = a.ref ? '<strong>' + a.ref + '</strong> — ' : '';
+    var messageHtml = (isPresse && a.link)
+      ? '<a href="' + a.link + '" target="_blank" rel="noopener" style="color:inherit;">' + a.message + ' ↗</a>'
+      : a.message;
+    var dismissBtn = '<button type="button" class="alert-dismiss-btn" data-alert-id="' + a.id + '" title="Marquer comme traité">✕</button>';
     if (compact) {
       return '<div class="alert-item"><span class="alert-dot" style="background:' + color + '"></span>' +
-        '<div><div style="font-weight:500;color:#1e293b">' + a.message + '</div>' +
-        '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' + a.ref + ' · ' + a.lieu + ' · ' + a.time + '</div>' +
-        '<div style="color:#94a3b8;font-size:11px;margin-top:1px">Source : ' + escapeHtml(sourceLabel) + '</div></div></div>';
+        '<div style="flex:1"><div style="font-weight:500;color:#1e293b">' + messageHtml + '</div>' +
+        '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' + [a.ref, a.lieu, a.time].filter(Boolean).join(' · ') + '</div>' +
+        '<div style="color:#94a3b8;font-size:11px;margin-top:1px">Source : ' + escapeHtml(sourceLabel) + '</div></div>' + dismissBtn + '</div>';
     }
     return '<div class="detail-item alert-module-item" style="border-left:3px solid ' + color + ';">' +
-      '<div><strong>' + a.ref + '</strong> — ' + a.message +
-      '<div style="color:#94a3b8;font-size:12px;margin-top:2px">' + a.lieu + ' · ' + a.time + '</div>' +
+      '<div>' + refPrefix + messageHtml +
+      '<div style="color:#94a3b8;font-size:12px;margin-top:2px">' + [a.lieu, a.time].filter(Boolean).join(' · ') + '</div>' +
       '<div style="color:#94a3b8;font-size:12px;margin-top:1px">Source : ' + escapeHtml(sourceLabel) + '</div></div>' +
-      '<span class="badge ' + badgeClassAlert + '">' + a.severity + '</span></div>';
+      '<div style="display:flex;align-items:center;gap:10px;"><span class="badge ' + badgeClassAlert + '">' + badgeLabel + '</span>' + dismissBtn + '</div></div>';
   }
 
   function renderAlerts(){
@@ -2727,11 +2780,113 @@
     var now = new Date();
     var pad = function(n){ return String(n).padStart(2, '0'); };
     var time = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-    alertsData.unshift({ ref: ref, message: message, lieu: lieu, time: time, severity: severity, source: source || 'Non précisée' });
+    alertsData.unshift({ id: nextAlertId(), ref: ref, message: message, lieu: lieu, time: time, severity: severity, source: source || 'Non précisée' });
+    saveStoredAlerts();
+    renderAlerts();
+  }
+
+  // ---- Alertes issues de la presse (news-alerts.json, généré périodiquement
+  // par .github/workflows/news-alerts.yml à partir de flux RSS de presse
+  // sénégalaise — voir scripts/fetch_news_alerts.py) ----
+  var PRESS_DISMISSED_KEY = 'caarangueYoonPressDismissedV1';
+
+  function loadDismissedPressLinks(){
+    try {
+      if (!window.localStorage) return [];
+      var raw = window.localStorage.getItem(PRESS_DISMISSED_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveDismissedPressLinks(links){
+    try {
+      if (window.localStorage) window.localStorage.setItem(PRESS_DISMISSED_KEY, JSON.stringify(links));
+    } catch (e) {
+      // Stockage indisponible : un article déjà traité pourra réapparaître
+      // au prochain chargement, sans casser le reste de l'application.
+    }
+  }
+
+  function loadPressAlerts(){
+    fetch('news-alerts.json', { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data || !Array.isArray(data.items)) return;
+        var dismissed = loadDismissedPressLinks();
+        var existingLinks = alertsData
+          .filter(function(a){ return a.type === 'presse'; })
+          .map(function(a){ return a.link; });
+        var added = false;
+        data.items.forEach(function(item){
+          if (!item || !item.link) return;
+          if (dismissed.indexOf(item.link) !== -1) return; // déjà traité par l'utilisateur
+          if (existingLinks.indexOf(item.link) !== -1) return; // déjà affiché
+          var isVideo = /youtube/i.test(item.source || '');
+          alertsData.unshift({
+            id: nextAlertId(), type: 'presse', ref: '', message: (isVideo ? '🎥 ' : '📰 ') + item.title,
+            lieu: item.source || 'Presse', time: item.publishedAt ? item.publishedAt.slice(0, 16).replace('T', ' ') : '',
+            severity: 'Presse', source: item.source || 'Presse', link: item.link
+          });
+          added = true;
+        });
+        if (added) { saveStoredAlerts(); renderAlerts(); }
+      })
+      .catch(function(){
+        // Pas de connexion, fichier absent, ou hébergement local sans ce
+        // fichier : l'application continue de fonctionner normalement,
+        // simplement sans alertes presse pour cette visite.
+      });
+  }
+
+  function dismissAlert(id){
+    var target = alertsData.filter(function(a){ return a.id === id; })[0];
+    if (target && target.type === 'presse' && target.link) {
+      var dismissed = loadDismissedPressLinks();
+      if (dismissed.indexOf(target.link) === -1) {
+        dismissed.push(target.link);
+        saveDismissedPressLinks(dismissed);
+      }
+    }
+    alertsData = alertsData.filter(function(a){ return a.id !== id; });
+    saveStoredAlerts();
+    renderAlerts();
+  }
+
+  function dismissAllAlerts(){
+    if (!alertsData.length) return;
+    var dismissed = loadDismissedPressLinks();
+    alertsData.forEach(function(a){
+      if (a.type === 'presse' && a.link && dismissed.indexOf(a.link) === -1) dismissed.push(a.link);
+    });
+    saveDismissedPressLinks(dismissed);
+    alertsData = [];
+    saveStoredAlerts();
     renderAlerts();
   }
 
   renderAlerts();
+  loadPressAlerts();
+  // Rafraîchit les alertes presse toutes les 15 minutes tant que le tableau
+  // de bord reste ouvert dans l'onglet.
+  setInterval(loadPressAlerts, 15 * 60 * 1000);
+
+  var alertListEl = document.getElementById('alert-list');
+  var alertMenuListEl = document.getElementById('alert-menu-list');
+  [alertListEl, alertMenuListEl].forEach(function(container){
+    if (!container) return;
+    container.addEventListener('click', function(e){
+      var dismissBtnClicked = e.target.closest('.alert-dismiss-btn');
+      if (!dismissBtnClicked) return;
+      e.stopPropagation();
+      dismissAlert(dismissBtnClicked.dataset.alertId);
+    });
+  });
+
+  var btnClearAllAlerts = document.getElementById('btn-clear-all-alerts');
+  if (btnClearAllAlerts) btnClearAllAlerts.addEventListener('click', function(){ dismissAllAlerts(); });
 
   var bellBtn = document.getElementById('alert-bell-btn');
   var alertMenu = document.getElementById('alert-menu');
@@ -4157,8 +4312,15 @@
     var kpiSaisis = document.getElementById('kpi-saisis');
     if (kpiSaisis) kpiSaisis.textContent = parseInt(kpiSaisis.textContent, 10) + 1;
 
+    var alertReasons = [];
     if (gravite === 'Mortel' || gravite === 'Blessés graves') {
-      addAlert(ref, gravite === 'Mortel' ? 'Accident mortel signalé' : 'Accident avec blessés graves', lieu, gravite, source || 'Non précisée');
+      alertReasons.push(gravite === 'Mortel' ? 'Accident mortel signalé' : 'Accident avec blessés graves');
+    }
+    if (transportCommun) {
+      alertReasons.push('🚌 Transport en commun impliqué' + (transportCommunType ? ' (' + transportCommunType + ')' : ''));
+    }
+    if (alertReasons.length) {
+      addAlert(ref, alertReasons.join(' — '), lieu, gravite, source || 'Non précisée');
     }
     addAuditLog('📋', 'Administrateur', 'a créé le signalement', ref);
     if (typeof pushHistorique === 'function') pushHistorique(ref, 'a créé le signalement (statut « À compléter »)');
