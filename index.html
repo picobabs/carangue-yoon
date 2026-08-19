@@ -2139,7 +2139,8 @@
     closeOverlay('overlay-detail');
     if (typeof applyFilters === 'function') applyFilters();
     if (typeof refreshDashboardWidgets === 'function') refreshDashboardWidgets();
-    addAuditLog('🗑', 'Administrateur', 'a supprimé définitivement le signalement', ref);
+    if (typeof deleteSignalementReal === 'function') deleteSignalementReal(ref);
+    addAuditLog('🗑', (currentUserProfile ? (currentUserProfile.nom || currentUserProfile.email) : 'Administrateur'), 'a supprimé définitivement le signalement', ref);
   });
 
   function applySignalementTransition(ref, newStatut, actionLabel, motif){
@@ -2156,7 +2157,12 @@
     if (typeof applyFilters === 'function') applyFilters();
     if (typeof updateAttenteBadges === 'function') updateAttenteBadges();
     if (typeof refreshDashboardWidgets === 'function') refreshDashboardWidgets();
-    addAuditLog(newStatut === 'Rejeté' ? '🚫' : '✅', 'Administrateur', actionLabel, ref);
+    if (typeof updateSignalementReal === 'function') {
+      var patch = { statut: newStatut };
+      if (motif) patch.motif_rejet = motif;
+      updateSignalementReal(ref, patch);
+    }
+    addAuditLog(newStatut === 'Rejeté' ? '🚫' : '✅', (currentUserProfile ? (currentUserProfile.nom || currentUserProfile.email) : 'Administrateur'), actionLabel, ref);
   }
 
   var btnValiderSignalementEl = document.getElementById('btn-valider-signalement');
@@ -2262,6 +2268,90 @@
       if (infoEl) infoEl.textContent = (profile.nom || profile.email) + ' — ' + profile.role + ' (' + profile.statut + ')';
     }
     if (typeof applyFilters === 'function') applyFilters();
+    if (typeof loadRealSignalements === 'function') loadRealSignalements();
+  }
+
+  /* ---------- Signalements réels (Supabase) ---------- */
+  function insertSignalementReal(ref, f){
+    if (!supabaseClient || !currentUserProfile) return;
+    supabaseClient.from('signalements').insert({
+      ref: ref,
+      created_by: currentUserProfile.id,
+      statut: 'En attente',
+      pv: f.pv, date_pv: f.datePv || null, date_accident: f.dateAccident || null, heure_accident: f.heureAccident,
+      region: f.region, departement: f.departement, commune: f.commune, localite: f.localite,
+      zone: f.zone, type_route: f.typeRoute, numero_route: f.numeroRoute, intersection: f.intersection,
+      type_intersection: f.typeIntersection, moment_jour: f.momentJour, eclairage_public: f.eclairagePublic,
+      source: f.source, lat: f.lat, lng: f.lng, adresse: f.adresse,
+      meteo_condition: f.meteoCondition, meteo_temp: f.meteoTemp, meteo_precip: f.meteoPrecip,
+      meteo_vent: f.meteoVent, meteo_visibilite: f.meteoVisibilite, meteo_etat_route: f.meteoEtatRoute,
+      gravite: f.gravite, cause_presumee: f.causePresumee, nb_vehicules: f.nbVehicules,
+      transport_commun: f.transportCommun, transport_commun_type: f.transportCommunType,
+      temoins_presents: f.temoinsPresents, temoins_contacts: f.temoinsContacts,
+      description: f.description, total_personnes: f.totalPersonnes
+    }).then(function(res){
+      if (res.error) console.error('Échec de la synchronisation du signalement ' + ref + ' vers la base réelle : ' + res.error.message);
+    });
+  }
+
+  function updateSignalementReal(ref, patch){
+    if (!supabaseClient) return;
+    supabaseClient.from('signalements').update(patch).eq('ref', ref).then(function(res){
+      if (res.error) console.error('Échec de la mise à jour du signalement ' + ref + ' (base réelle) : ' + res.error.message);
+    });
+  }
+
+  function deleteSignalementReal(ref){
+    if (!supabaseClient) return;
+    supabaseClient.from('signalements').delete().eq('ref', ref).then(function(res){
+      if (res.error) console.error('Échec de la suppression du signalement ' + ref + ' (base réelle) : ' + res.error.message);
+    });
+  }
+
+  async function loadRealSignalements(){
+    if (!supabaseClient) return;
+    var res = await supabaseClient.from('signalements').select('*').order('created_at', { ascending: false });
+    if (res.error) { console.error('Chargement des signalements (base réelle) impossible : ' + res.error.message); return; }
+    var rows = res.data || [];
+    var tbody = document.querySelector('#table-signalements tbody');
+    if (!tbody) return;
+    var statutClassMap = { 'Validé':'badge-valide', 'En attente':'badge-attente', 'En analyse':'badge-analyse', 'Rejeté':'badge-rejete' };
+    rows.forEach(function(row){
+      if (document.querySelector('#table-signalements tbody tr[data-ref="' + row.ref + '"]')) return;
+      var lieu = row.adresse || [row.numero_route, row.commune].filter(Boolean).join(' — ') || row.commune || 'Lieu non précisé';
+      var lieuAffiche = lieu + (row.lat && row.lng ? ' (' + row.lat + ', ' + row.lng + ')' : '');
+      var tr = document.createElement('tr');
+      tr.className = 'signalement-row';
+      tr.dataset.ref = row.ref;
+      tr.setAttribute('data-statut', row.statut);
+      tr.setAttribute('data-gravite', row.gravite || '');
+      tr.setAttribute('data-region', row.region || '');
+      tr.innerHTML =
+        '<td style="font-weight:500">' + escapeHtml(row.ref) + '</td>' +
+        '<td>' + escapeHtml(lieuAffiche) + '</td>' +
+        '<td style="color:#94a3b8">' + escapeHtml(row.date_accident || '') + '</td>' +
+        '<td>' + escapeHtml(row.type_route || '') + '</td>' +
+        '<td>' + escapeHtml(row.gravite || '') + '</td>' +
+        '<td><span class="badge ' + (statutClassMap[row.statut] || 'badge-attente') + '">' + escapeHtml(row.statut) + '</span></td>';
+      tbody.insertBefore(tr, tbody.firstChild);
+      signalementExtra[row.ref] = {
+        pv: row.pv, datePv: row.date_pv, dateAccident: row.date_accident, heureAccident: row.heure_accident, source: row.source,
+        region: row.region, departement: row.departement, commune: row.commune, localite: row.localite,
+        zone: row.zone, typeRoute: row.type_route, numeroRoute: row.numero_route, intersection: row.intersection,
+        typeIntersection: row.type_intersection, momentJour: row.moment_jour, eclairagePublic: row.eclairage_public,
+        lat: row.lat, lng: row.lng, adresse: row.adresse,
+        meteoCondition: row.meteo_condition, meteoTemp: row.meteo_temp, meteoPrecip: row.meteo_precip,
+        meteoVent: row.meteo_vent, meteoVisibilite: row.meteo_visibilite, meteoEtatRoute: row.meteo_etat_route,
+        causePresumee: row.cause_presumee, nbVehicules: row.nb_vehicules,
+        transportCommun: row.transport_commun, transportCommunType: row.transport_commun_type,
+        temoinsPresents: row.temoins_presents, temoinsContacts: row.temoins_contacts,
+        description: row.description, pietonTally: null, totalPersonnes: row.total_personnes,
+        photos: [], croquis: '', documents: []
+      };
+    });
+    if (typeof applyFilters === 'function') applyFilters();
+    if (typeof updateAttenteBadges === 'function') updateAttenteBadges();
+    if (typeof refreshDashboardWidgets === 'function') refreshDashboardWidgets();
   }
 
   async function loadOwnProfileAndEnter(user){
@@ -4594,6 +4684,20 @@
       description: description, pietonTally: pietonTally, totalPersonnes: totalPersonnes,
       photos: photos, croquis: croquis, documents: nsDocumentsData.slice()
     };
+
+    insertSignalementReal(ref, {
+      pv: pv, datePv: datePv, dateAccident: dateAccident, heureAccident: heureAccident, source: source,
+      region: region, departement: departement, commune: commune, localite: localite,
+      zone: zone, typeRoute: typeRoute, numeroRoute: numeroRoute, intersection: intersection,
+      typeIntersection: typeIntersection, momentJour: momentJour, eclairagePublic: eclairagePublic,
+      lat: lat, lng: lng, adresse: adresse,
+      meteoCondition: meteoCondition, meteoTemp: meteoTemp, meteoPrecip: meteoPrecip,
+      meteoVent: meteoVent, meteoVisibilite: meteoVisibilite, meteoEtatRoute: meteoEtatRoute,
+      gravite: gravite, causePresumee: causePresumee, nbVehicules: nbVehicules,
+      transportCommun: transportCommun, transportCommunType: transportCommunType,
+      temoinsPresents: temoinsPresents, temoinsContacts: temoinsContacts,
+      description: description, totalPersonnes: totalPersonnes
+    });
 
     var kpiSaisis = document.getElementById('kpi-saisis');
     if (kpiSaisis) kpiSaisis.textContent = parseInt(kpiSaisis.textContent, 10) + 1;

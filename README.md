@@ -160,6 +160,44 @@ données incluse), sans carte bancaire à renseigner à l'inscription — mais
 comme pour tout service tiers, vérifie les conditions/tarifs actuels sur
 supabase.com si le nombre de comptes ou d'utilisation grossit beaucoup.
 
+## Signalements réels et partagés (Supabase, même base)
+
+En plus des comptes/rôles, les **signalements** (les accidents créés via
+« + Nouveau signalement ») sont maintenant, eux aussi, sauvegardés dans la
+même base Supabase et partagés entre tous les comptes connectés — un agent
+qui crée un signalement le voit apparaître pour un superviseur connecté sur
+un autre appareil, et il reste disponible après un rechargement de la page.
+
+Si `SUPABASE_URL`/`SUPABASE_ANON_KEY` sont déjà configurées (voir la section
+précédente), il ne reste qu'une seule étape :
+
+1. Dans **Supabase → SQL Editor → New query**, colle **tout le contenu** du
+   fichier `supabase-setup-signalements.sql` fourni dans ce dossier, puis
+   clique **Run**. Cela crée la table `signalements` et ses règles de
+   sécurité (RLS) : tout compte connecté et actif peut voir tous les
+   signalements ; chacun ne peut créer un signalement qu'en son propre nom ;
+   seuls Superviseur/Administrateur peuvent le valider, le rejeter ou changer
+   son statut ; seul un Administrateur peut le supprimer définitivement —
+   les mêmes règles que dans l'interface.
+2. Publie le `index.html` fourni (déjà mis à jour) sur GitHub Pages comme
+   d'habitude. C'est tout — aucune autre configuration.
+
+**Ce qui est déjà réel et partagé** : les données du formulaire de
+signalement (lieu, date, gravité, météo, coordonnées GPS, etc.), la création,
+la validation/le rejet, et la suppression.
+
+**Ce qui reste local pour l'instant** (par choix, pour avancer par étapes) :
+les **photos, croquis et documents joints** à un signalement restent
+uniquement dans le navigateur de la personne qui les a ajoutés (pas encore
+envoyés à Supabase) ; les données détaillées de **véhicules et victimes**
+associées à un signalement restent également en mémoire locale ; de même,
+l'**historique de validation** (qui a validé/rejeté et quand) affiché dans le
+détail d'un signalement n'est pas encore sauvegardé dans la base — il peut
+donc disparaître au rechargement de la page pour un signalement réel. Les
+anciennes données de démonstration et l'historique Gendarmerie restent, eux,
+des données de référence locales, non migrées. Chacune de ces étapes peut
+être ajoutée par la suite de la même façon, si besoin.
+
 ## Bon à savoir
 
 - C'est un hébergement **gratuit et illimité en durée**, sans carte
@@ -167,12 +205,10 @@ supabase.com si le nombre de comptes ou d'utilisation grossit beaucoup.
 - Le dépôt doit rester **public** pour que Pages soit gratuit sur un compte
   GitHub personnel standard (les dépôts privés + Pages gratuits ne sont
   disponibles que sur les comptes GitHub Pro/organisation).
-- Cette plateforme reste un fichier HTML autonome pour les **signalements** :
-  sans configuration Supabase supplémentaire (voir plus haut, qui ne couvre
-  que les comptes/rôles), chaque visiteur a sa propre session en mémoire —
-  les signalements créés ne sont pas partagés entre utilisateurs, ni
-  sauvegardés d'une visite à l'autre. Si tu veux qu'un signalement créé par
-  un agent soit visible par les autres aussi, il faudrait étendre la même
-  base Supabase à une table "signalements" — dis-le moi si c'est ce qu'il te
-  faut, c'est une suite logique naturelle à ce qui vient d'être mis en place
-  pour les comptes.
+- Si `SUPABASE_URL`/`SUPABASE_ANON_KEY` sont configurées **et** que
+  `supabase-setup-signalements.sql` a été exécuté (voir la section
+  « Signalements réels et partagés » plus haut), les signalements sont
+  partagés entre utilisateurs et sauvegardés en base. Sans cette étape,
+  chaque visiteur garde sa propre session en mémoire (rien de partagé ni
+  sauvegardé). Les photos/croquis/documents et les données véhicules/
+  victimes restent, dans tous les cas, locales pour l'instant.
